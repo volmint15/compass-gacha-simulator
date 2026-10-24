@@ -1,0 +1,1897 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>#コンパス コラボガチャ統合シミュレーター</title>
+  <!-- カード名データを読み込み -->
+  <script src="card_names.js"></script>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --accent-color: #00d2ff;
+      --text-color: #f8fafc;
+      --ur-color: #ff0055;
+      --sr-color: #ffd700;
+      --r-color: #3b82f6;
+    }
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    h1 {
+      color: var(--accent-color);
+      margin: 0;
+      font-size: 24px;
+    }
+    .settings-toggle-btn {
+      width: auto;
+      padding: 8px 16px;
+      background: #334155;
+      border: 1px solid #475569;
+      color: #fff;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-top: 0;
+    }
+    .settings-toggle-btn:hover {
+      background: #475569;
+    }
+
+    /* 設定パネル */
+    .settings-panel {
+      display: none;
+      background: #0f172a;
+      border: 2px solid var(--accent-color);
+      border-radius: 12px;
+      padding: 15px 20px;
+      margin-bottom: 20px;
+    }
+    .settings-panel.active {
+      display: block;
+    }
+    .settings-panel h3 {
+      margin-top: 0;
+      color: var(--accent-color);
+      font-size: 16px;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 8px;
+    }
+
+    .tab-menu {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      background: #334155;
+      border: none;
+      color: #fff;
+      font-weight: bold;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      font-size: 15px;
+    }
+    .tab-btn.active {
+      background: var(--card-bg);
+      color: var(--accent-color);
+      border-bottom: 3px solid var(--accent-color);
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 15px;
+    }
+
+    /* 3列レイアウト用のスタイル */
+    .top-settings-grid {
+      display: grid;
+      grid-template-columns: 240px 1fr 300px;
+      gap: 20px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .top-settings-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #94a3b8;
+    }
+    select, input, button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      background-color: #0f172a;
+      color: #fff;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    button {
+      background: linear-gradient(135deg, #00d2ff, #0072ff);
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-top: 5px;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    button:disabled {
+      background: #475569 !important;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-group button {
+      flex: 1;
+    }
+    .convex-btn-group {
+      display: flex;
+      gap: 5px;
+      margin-top: 5px;
+    }
+    .convex-btn-group button {
+      margin-top: 0;
+      padding: 6px 4px;
+      font-size: 12px;
+      background: #334155;
+      border: 1px solid #475569;
+    }
+    .convex-btn-group button:hover {
+      background: #475569;
+    }
+    .convex-btn-group button.active {
+      background: #0284c7;
+      border-color: #38bdf8;
+    }
+
+    .stats-card {
+      background: #0f172a;
+      border-left: 4px solid var(--accent-color);
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 4px;
+    }
+    .stats-value {
+      font-size: 1.3em;
+      font-weight: bold;
+      color: #fff;
+    }
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 10px;
+      background: #0f172a;
+      border-radius: 8px;
+    }
+    .card-item {
+      position: relative;
+      background: #334155;
+      border-radius: 6px;
+      overflow: hidden;
+      text-align: center;
+      border: 2px solid transparent;
+      padding-bottom: 4px;
+    }
+    .card-item.UR { border-color: var(--ur-color); }
+    .card-item.SR { border-color: var(--sr-color); }
+    .card-item.R { border-color: var(--r-color); }
+    .card-item img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .card-badge {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      padding: 2px 4px;
+      font-size: 10px;
+      font-weight: bold;
+      border-radius: 3px;
+      color: #fff;
+    }
+    .badge-UR { background: var(--ur-color); }
+    .badge-SR { background: var(--sr-color); color: #000; }
+    .badge-R { background: var(--r-color); }
+    .badge-collab {
+      position: absolute;
+      bottom: 18px;
+      right: 2px;
+      background: rgba(0,0,0,0.8);
+      color: #00d2ff;
+      font-size: 8px;
+      padding: 1px 3px;
+      border-radius: 2px;
+    }
+    .card-count-badge {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      background: #0f172a;
+      color: #00d2ff;
+      font-size: 11px;
+      font-weight: bold;
+      padding: 1px 5px;
+      border-radius: 4px;
+      border: 1px solid #00d2ff;
+    }
+    .collab-tracker-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .tracker-card {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 8px;
+      text-align: center;
+    }
+    .tracker-card img {
+      width: 60px;
+      height: auto;
+      border-radius: 4px;
+      margin-bottom: 4px;
+    }
+    .tracker-info {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    .tracker-input-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      margin-top: 4px;
+    }
+    .tracker-input-group label {
+      font-size: 10px;
+      margin: 0;
+      color: #cbd5e1;
+    }
+    .tracker-input-group input {
+      width: 45px;
+      padding: 2px 4px;
+      font-size: 12px;
+      text-align: center;
+    }
+    .tracker-count {
+      font-size: 13px;
+      font-weight: bold;
+      color: #00d2ff;
+      margin-top: 3px;
+    }
+
+    /* タブ2（1点・複数点狙い）専用スタイル */
+    .target-checkbox-card {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 8px;
+      text-align: center;
+    }
+    .target-checkbox-card img {
+      width: 60px;
+      height: auto;
+      border-radius: 4px;
+      margin-bottom: 4px;
+    }
+    .target-checkbox-card.selected {
+      border-color: var(--accent-color);
+      background: rgba(0, 210, 255, 0.05);
+    }
+
+    /* 製作者コメント・応援ボックススタイル */
+    .author-card {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      line-height: 1.8;
+      color: #cbd5e1;
+    }
+    .support-box {
+      background: linear-gradient(135deg, rgba(0, 210, 255, 0.1), rgba(0, 114, 255, 0.1));
+      border: 2px solid var(--accent-color);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      margin-top: 20px;
+    }
+    .code-display {
+      display: inline-block;
+      background: #0f172a;
+      border: 1px dashed var(--accent-color);
+      color: #38bdf8;
+      font-size: 22px;
+      font-weight: bold;
+      padding: 6px 16px;
+      border-radius: 8px;
+      letter-spacing: 2px;
+      margin: 10px 0;
+    }
+    .copy-btn {
+      width: auto;
+      display: inline-block;
+      padding: 8px 18px;
+      margin-left: 10px;
+      font-size: 13px;
+      background: #0284c7;
+    }
+
+    /* 課金チャージ表示スタイル強調 */
+    .charge-info-text {
+      font-size: 13px;
+      color: #c084fc;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+    .charge-yen-highlight {
+      font-size: 15px;
+      font-weight: bold;
+      color: #e879f9;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header-container">
+    <h1>#コンパス コラボガチャ統合シミュレーター</h1>
+    <button class="settings-toggle-btn" onclick="toggleSettingsPanel()">⚙️ 詳細設定</button>
+  </div>
+
+  <!-- 詳細設定パネル -->
+  <div class="settings-panel" id="settingsPanel">
+    <h3>⚙️ 排出確率・カード枚数設定（環境調整）</h3>
+    <div class="grid">
+      <div>
+        <label for="cfgConstantUR">恒常URカード総数</label>
+        <input type="number" id="cfgConstantUR" value="83" min="1" onchange="onConfigChanged()">
+      </div>
+      <div>
+        <label for="cfgConstantSR">恒常SRカード総数</label>
+        <input type="number" id="cfgConstantSR" value="72" min="1" onchange="onConfigChanged()">
+      </div>
+      <div>
+        <label for="cfgConstantR">恒常Rカード総数</label>
+        <input type="number" id="cfgConstantR" value="38" min="1" onchange="onConfigChanged()">
+      </div>
+      <div>
+        <label for="cfgCollabWeight">コラボ1種あたりUR重み</label>
+        <input type="number" id="cfgCollabWeight" value="28" min="1" onchange="onConfigChanged()">
+        <small style="color: #94a3b8; font-size: 10px;">※2・3種は28、4種は21が基本設定です</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-menu">
+    <button class="tab-btn active" onclick="switchTab('simTab', this)">1. ガチャシミュレーター（全体目標）</button>
+    <button class="tab-btn" onclick="switchTab('targetSimTab', this)">2. 1点・複数点狙いシミュレーター</button>
+    <button class="tab-btn" onclick="switchTab('commentTab', this)">3. 製作者コメント</button>
+  </div>
+
+  <!-- タブ1: シミュレーター（全体目標） -->
+  <div id="simTab" class="tab-content active">
+    <!-- 設定パネル（3列最適化レイアウト） -->
+    <div class="panel">
+      <h2>1. ガチャ条件・コラボ選択</h2>
+      <div class="top-settings-grid">
+        <!-- 左列: コラボ選択（縦並び） -->
+        <div>
+          <div style="margin-bottom: 12px;">
+            <label for="collabType">コラボタイプ</label>
+            <select id="collabType" onchange="onCollabTypeChanged()">
+              <option value="2">2種コラボ</option>
+              <option value="3" selected>3種コラボ</option>
+              <option value="4">4種コラボ</option>
+            </select>
+          </div>
+          <div>
+            <label for="collabSelect">コラボタイトル</label>
+            <select id="collabSelect" onchange="onCollabTitleChanged()"></select>
+          </div>
+        </div>
+
+        <!-- 中央列: BM入力 ＆ 豆電球期待値表示 -->
+        <div>
+          <label>所持BM構成 (初期 ＋ 課金チャージ)</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+            <div>
+              <label style="font-size: 11px; color: #94a3b8; margin-bottom: 2px;">初期所持BM</label>
+              <input type="number" id="initialBM" value="0" step="100" oninput="onBMInputChanged()">
+            </div>
+            <div>
+              <label style="font-size: 11px; color: #94a3b8; margin-bottom: 2px;">合計所持BM</label>
+              <div id="displayTotalBM" style="padding: 10px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; font-weight: bold; color: #38bdf8; font-size: 14px; text-align: center; height: 41px; box-sizing: border-box; display: flex; align-items: center; justify-content: center;">0 BM</div>
+            </div>
+          </div>
+
+          <!-- 所持BMでのコラボUR排出期待値 表示エリア -->
+          <div style="font-size: 12px; color: #38bdf8; background: #0f172a; border: 1px solid #0284c7; border-radius: 6px; padding: 8px 10px;">
+            💡 所持BMでのコラボUR排出期待値: <span id="displayBMExpectedUR" style="font-weight: bold; font-size: 1.1em; color: #ff0055;">0.00</span> 枚
+            <span id="displayBMExpectedDetail" style="font-size: 10px; color: #cbd5e1; font-weight: normal; margin-left: 4px;">(※5,000 BM未満のためガチャ未実行)</span>
+            <span style="font-size: 10px; color: #94a3b8; display: block; margin-top: 2px;">（※ガチャ直接排出 ＋ 獲得チケット分を含む理論値）</span>
+          </div>
+        </div>
+
+        <!-- 右列: 課金チャージ操作 -->
+        <div>
+          <label>課金チャージ操作</label>
+          <div class="charge-info-text">
+            チャージ分: <span id="displayChargedBM" style="font-weight: bold; color: #f43f5e;">0 BM</span><br>
+            （<span id="displayChargedYen" class="charge-yen-highlight">累計課金: ¥0</span>）
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
+            <button type="button" onclick="addYenCharge(10000)" style="margin-top: 0; font-size: 11px; background: #10b981; padding: 8px 4px;">＋1万円 (+1.37万BM)</button>
+            <button type="button" onclick="addYenCharge(50000)" style="margin-top: 0; font-size: 11px; background: #059669; padding: 8px 4px;">＋5万円 (+6.85万BM)</button>
+          </div>
+          <button type="button" onclick="resetBM()" style="margin-top: 0; font-size: 11px; background: #ef4444; padding: 6px;">BM・課金リセット</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 逆算 ＆ リアルタイム進捗パネル -->
+    <div class="panel">
+      <h2>2. 目標枚数 ＆ リアルタイム進捗</h2>
+      <div class="grid">
+        <div>
+          <label for="targetUR">目標コラボUR枚数</label>
+          <input type="number" id="targetUR" value="60" oninput="calculateReverse()">
+          <div class="convex-btn-group" id="convexBtnGroup">
+            <button type="button" onclick="setTargetConvex(0, this)">無凸(1枚/種)</button>
+            <button type="button" onclick="setTargetConvex(1, this)">1凸(2枚/種)</button>
+            <button type="button" onclick="setTargetConvex(2, this)">2凸(5枚/種)</button>
+            <button type="button" onclick="setTargetConvex(3, this)">3凸(11枚/種)</button>
+            <button type="button" class="active" onclick="setTargetConvex(4, this)">完凸(20枚/種)</button>
+          </div>
+          <small id="targetHint" style="color: #94a3b8; margin-top: 4px; display: block;"></small>
+        </div>
+      </div>
+
+      <!-- リアルタイム進捗エリア -->
+      <div class="stats-card">
+        <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 4px;">【ガチャ進行状況】</div>
+        <div>現在有効UR数: <span class="stats-value" id="resEffectiveUR" style="color: #ff0055;">0 枚</span> / 目標 <span id="resTargetUR">60</span> 枚</div>
+        <div>
+          現在回した60連数: <span id="resPulls60Count" style="font-weight: bold;">0</span> 回 
+          (初期想定: <span id="resInitial想定Rolls" style="font-weight: bold;">0</span> 回 / 差分: <span id="resDiffRolls" style="font-weight: bold; color: #00d2ff;">0 回</span>)
+        </div>
+        <div>
+          引きの強さ評価: <span id="resLuckPercentile" style="font-weight: bold; font-size: 1.1em; color: #f59e0b;">-</span>
+        </div>
+        <div>残り必要予想60連回数 / 必要BM: <span class="stats-value" id="resRolls">0 回 / 0 BM</span></div>
+        <div>不足BM目安 / 必要課金額目安: <span class="stats-value" id="resCost" style="color: #00d2ff;">0 BM / 0 円</span></div>
+      </div>
+    </div>
+
+    <!-- ガチャ実行パネル -->
+    <div class="panel">
+      <h2>3. リアルタイムガチャ試行</h2>
+      <div class="btn-group">
+        <button id="btnPullSingle" onclick="pullGacha(1)">単発引き (100 BM)</button>
+        <button id="btnPull60" onclick="pullGacha(60)">60連引き (5,000 BM)</button>
+        <button onclick="resetGacha()" style="background: #64748b;">試行リセット</button>
+      </div>
+      <div id="bmErrorMsg" style="color: #ef4444; font-size: 13px; font-weight: bold; margin-top: 5px; display: none;">※所持BMが不足しているためガチャを引けません。</div>
+
+      <div class="stats-card" style="margin-top: 15px;">
+        <div class="grid">
+          <div>累計ガチャ回数: <span id="statTotalPulls">0</span> 回</div>
+          <div>所持BM残高: <span id="statOwnedBM" style="color: #38bdf8;">0</span> BM</div>
+          <div>累計消費BM / 概算使用金額: <span id="statSpentBM" style="color: #f43f5e;">0 BM (¥0)</span></div>
+          <div>獲得チケット: <span id="statTickets" style="font-weight: bold;">0 枚 (交換可能: 0 枚)</span></div>
+          <div>排出UR総数: <span id="statURCount">0</span> 枚 (コラボUR: <span id="statCollabURCount">0</span> 枚)</div>
+        </div>
+      </div>
+
+      <h3 style="margin-top: 20px;">コラボカード所持状況・排出カウンター</h3>
+      <div style="font-size: 12px; color: #94a3b8;">※ガチャ開始前に既存の所持枚数を入力してください。入力に応じて目標UR枚数が自動調整されます（ガチャ開始後はロック）。</div>
+      <div class="collab-tracker-grid" id="collabTrackerContainer"></div>
+
+      <h3 style="margin-top: 20px;">排出カード履歴（今回引いた分・優先度順ソート）</h3>
+      <div class="results-grid" id="cardResults"></div>
+    </div>
+  </div>
+
+  <!-- タブ2: 1点・複数点狙いシミュレーター -->
+  <div id="targetSimTab" class="tab-content">
+    <!-- タブ2独自 条件・コラボ＆BM選択パネル（3列最適化レイアウト） -->
+    <div class="panel">
+      <h2>1. ガチャ条件・コラボ選択</h2>
+      <div class="top-settings-grid">
+        <!-- 左列: コラボ選択（縦並び） -->
+        <div>
+          <div style="margin-bottom: 12px;">
+            <label for="tCollabType">コラボタイプ</label>
+            <select id="tCollabType" onchange="onTCollabTypeChanged()">
+              <option value="2">2種コラボ</option>
+              <option value="3" selected>3種コラボ</option>
+              <option value="4">4種コラボ</option>
+            </select>
+          </div>
+          <div>
+            <label for="tCollabSelect">コラボタイトル</label>
+            <select id="tCollabSelect" onchange="onTCollabTitleChanged()"></select>
+          </div>
+        </div>
+
+        <!-- 中央列: BM入力 ＆ 狙い目期待値（豆電球） -->
+        <div>
+          <label>所持BM構成 (初期 ＋ 課金チャージ)</label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+            <div>
+              <label style="font-size: 11px; color: #94a3b8; margin-bottom: 2px;">初期所持BM</label>
+              <input type="number" id="tInitialBM" value="0" step="100" oninput="onTBMInputChanged()">
+            </div>
+            <div>
+              <label style="font-size: 11px; color: #94a3b8; margin-bottom: 2px;">合計所持BM</label>
+              <div id="tDisplayTotalBM" style="padding: 10px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; font-weight: bold; color: #38bdf8; font-size: 14px; text-align: center; height: 41px; box-sizing: border-box; display: flex; align-items: center; justify-content: center;">0 BM</div>
+            </div>
+          </div>
+
+          <!-- タブ2独自：所持BMでの狙い目UR排出期待値 表示エリア -->
+          <div style="font-size: 12px; color: #38bdf8; background: #0f172a; border: 1px solid #0284c7; border-radius: 6px; padding: 8px 10px;">
+            💡 所持BMでの狙い目UR排出期待値: <span id="tDisplayBMExpectedUR" style="font-weight: bold; font-size: 1.1em; color: #ff0055;">0.00</span> 枚
+            <span id="tDisplayBMExpectedDetail" style="font-size: 10px; color: #cbd5e1; font-weight: normal; margin-left: 4px;">(※5,000 BM未満のためガチャ未実行)</span>
+            <span style="font-size: 10px; color: #94a3b8; display: block; margin-top: 2px;">（※狙い目カード確率 ＋ チケット集中枠を含む理論値）</span>
+          </div>
+        </div>
+
+        <!-- 右列: 課金チャージ操作 -->
+        <div>
+          <label>課金チャージ操作</label>
+          <div class="charge-info-text">
+            チャージ分: <span id="tDisplayChargedBM" style="font-weight: bold; color: #f43f5e;">0 BM</span><br>
+            （<span id="tDisplayChargedYen" class="charge-yen-highlight">累計課金: ¥0</span>）
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;">
+            <button type="button" onclick="addTYenCharge(10000)" style="margin-top: 0; font-size: 11px; background: #10b981; padding: 8px 4px;">＋1万円 (+1.37万BM)</button>
+            <button type="button" onclick="addTYenCharge(50000)" style="margin-top: 0; font-size: 11px; background: #059669; padding: 8px 4px;">＋5万円 (+6.85万BM)</button>
+          </div>
+          <button type="button" onclick="resetTBM()" style="margin-top: 0; font-size: 11px; background: #ef4444; padding: 6px;">BM・課金リセット</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>2. 狙い目カード選択（ピンポイント狙い）</h2>
+      <div style="font-size: 12px; color: #94a3b8; margin-bottom: 10px;">※欲しいURカードにチェックを入れてください。チェックを入れたカードのみを目標および交換チケットの集中先とします（外れ枠は目標外としてカウント）。</div>
+      
+      <div class="grid" style="margin-bottom: 15px;">
+        <div>
+          <label>目標凸数（チェックを入れた全カード共通）</label>
+          <div class="convex-btn-group" id="tConvexBtnGroup">
+            <button type="button" onclick="setTargetSimConvex(0, this)">無凸(1枚/種)</button>
+            <button type="button" onclick="setTargetSimConvex(1, this)">1凸(2枚/種)</button>
+            <button type="button" onclick="setTargetSimConvex(2, this)">2凸(5枚/種)</button>
+            <button type="button" onclick="setTargetSimConvex(3, this)">3凸(11枚/種)</button>
+            <button type="button" class="active" onclick="setTargetSimConvex(4, this)">完凸(20枚/種)</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="collab-tracker-grid" id="targetSimTrackerContainer"></div>
+
+      <!-- リアルタイム進捗エリア（狙い撃ち用） -->
+      <div class="stats-card" style="margin-top: 20px;">
+        <div style="color: var(--accent-color); font-weight: bold; margin-bottom: 4px;">【1点・複数点狙い ガチャ進行状況】</div>
+        <div>狙い目有効UR数: <span class="stats-value" id="tResEffectiveUR" style="color: #ff0055;">0 枚</span> / 目標 <span id="tResTargetUR">0</span> 枚</div>
+        <div>
+          現在回した60連数: <span id="tResPulls60Count" style="font-weight: bold;">0</span> 回 
+          (初期想定: <span id="tResInitialRolls" style="font-weight: bold;">0</span> 回 / 差分: <span id="tResDiffRolls" style="font-weight: bold; color: #00d2ff;">0 回</span>)
+        </div>
+        <div>
+          引きの強さ評価（狙い目確率基準）: <span id="tResLuckPercentile" style="font-weight: bold; font-size: 1.1em; color: #f59e0b;">-</span>
+        </div>
+        <div>残り必要予想60連回数 / 必要BM: <span class="stats-value" id="tResRolls">0 回 / 0 BM</span></div>
+        <div>不足BM目安 / 必要課金額目安: <span class="stats-value" id="tResCost" style="color: #00d2ff;">0 BM / 0 円</span></div>
+      </div>
+    </div>
+
+    <!-- 狙い撃ちガチャ試行パネル -->
+    <div class="panel">
+      <h2>3. 狙い撃ちガチャ試行</h2>
+      <div class="btn-group">
+        <button id="tBtnPullSingle" onclick="targetPullGacha(1)">単発引き (100 BM)</button>
+        <button id="tBtnPull60" onclick="targetPullGacha(60)">60連引き (5,000 BM)</button>
+        <button onclick="resetTargetGacha()" style="background: #64748b;">試行リセット</button>
+      </div>
+      <div id="tBmErrorMsg" style="color: #ef4444; font-size: 13px; font-weight: bold; margin-top: 5px; display: none;">※所持BMが不足しているためガチャを引けません。</div>
+
+      <div class="stats-card" style="margin-top: 15px;">
+        <div class="grid">
+          <div>累計ガチャ回数: <span id="tStatTotalPulls">0</span> 回</div>
+          <div>所持BM残高: <span id="tStatOwnedBM" style="color: #38bdf8;">0</span> BM</div>
+          <div>累計消費BM / 概算使用金額: <span id="tStatSpentBM" style="color: #f43f5e;">0 BM (¥0)</span></div>
+          <div>獲得チケット: <span id="tStatTickets" style="font-weight: bold;">0 枚 (狙い目交換可能: 0 枚)</span></div>
+          <div>排出UR総数: <span id="tStatURCount">0</span> 枚 (狙い目コラボUR: <span id="tStatCollabURCount">0</span> 枚 / 外れコラボUR: <span id="tStatOtherCollabURCount">0</span> 枚)</div>
+        </div>
+      </div>
+
+      <h3 style="margin-top: 20px;">排出カード履歴（今回引いた分・優先度順ソート）</h3>
+      <div class="results-grid" id="tCardResults"></div>
+    </div>
+  </div>
+
+  <!-- タブ3: 製作者コメント ＆ クリエイター応援コード -->
+  <div id="commentTab" class="tab-content">
+    <div class="panel">
+      <h2>製作者からのご挨拶・応援のお願い</h2>
+      
+      <div class="author-card">
+        <p style="margin-top: 0;">
+          シミュレーターをご利用いただきありがとうございます！<br>
+          このシミュレーターが皆様のガチャ予測、金額予測の参考になれば幸いです。<br>
+          皆様のガチャ結果が最良のものとなりますよう、お祈りいたします！
+        </p>
+      </div>
+
+      <div class="support-box">
+        <h3 style="margin-top: 0; color: #fff; font-size: 18px;">🙌 #コンパス クリエイター応援のお願い</h3>
+        <p style="font-size: 14px; margin: 8px 0;">
+          もしこのシミュレーターが役に立ちましたら、#コンパス アプリ内での応援をお願いします！<br>
+          制作活動の励みになります。
+        </p>
+        
+        <div style="margin-top: 15px;">
+          <span style="font-size: 13px; color: #94a3b8;">クリエイター応援コード：</span><br>
+          <span class="code-display" id="authorCreatorCode">C-zhFb</span>
+          <button class="copy-btn" onclick="copyAuthorCode()">コードをコピー</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const COLLAB_NAMES = {
+  "csm_2type": "チェンソーマン2", "toaru_2type": "とある科学の超電磁砲2",
+  "abyss": "メイドインアビス", "danron": "ダンガンロンパ", "exe": "ロックマンエグゼ",
+  "fa": "鋼の錬金術師", "ff": "FFXV", "kabuki": "超歌舞伎", "kagejitsu": "陰の実力者になりたくて！",
+  "kyojin": "進撃の巨人", "mahjongsoul": "雀魂", "musyoku": "無職転生", "na": "ニーア オートマタ",
+  "nekomiya": "猫宮ひなた", "ol": "オーバーロード", "p5": "ペルソナ5", "popte": "ポプテピピック",
+  "ryza": "ライザのアトリエ", "satsuten": "殺戮の天使", "sg": "シュタインズ・ゲート",
+  "tensura": "転スラ", "youjo": "幼女戦記",
+  "csm": "チェンソーマン", "toaru": "とある科学の超電磁砲", "bunsuto": "文豪ストレイドッグス",
+  "fake": "Fate/strange Fake", "fate": "Fate/stay night [HF]", "hh": "HUNTER×HUNTER",
+  "konosuba": "この素晴らしい世界に祝福を！", "rezero": "Re:ゼロから始める異世界生活",
+  "sao": "ソードアート・オンライン", "sf": "ストリートファイター"
+};
+
+const COLLAB_LISTS = {
+  "2": ["csm_2type", "toaru_2type"],
+  "3": ["abyss", "danron", "exe", "fa", "ff", "kabuki", "kagejitsu", "kyojin", "mahjongsoul", "musyoku", "na", "nekomiya", "ol", "p5", "popte", "ryza", "satsuten", "sg", "tensura", "youjo"],
+  "4": ["csm", "toaru", "bunsuto", "fake", "fate", "hh", "konosuba", "rezero", "sao", "sf"]
+};
+
+// 凸数に応じた1種あたりの目標枚数マップ
+const CONVEX_MAP = {
+  0: 1,  // 無凸
+  1: 2,  // 1凸
+  2: 5,  // 2凸
+  3: 11, // 3凸
+  4: 20  // 4凸(完凸)
+};
+
+// 恒常プール配列
+function buildConstantURPool() {
+  const pools = [
+    { prefix: 'a', count: 16 }, { prefix: 'b', count: 17 }, { prefix: 'c', count: 6 },
+    { prefix: 'd', count: 6 },  { prefix: 'e', count: 5 },  { prefix: 'f', count: 4 }, { prefix: 's', count: 29 }
+  ];
+  let arr = [];
+  pools.forEach(p => {
+    for (let i = 1; i <= p.count; i++) {
+      arr.push(`images/constant/constant_ur/${p.prefix}_ur${i}.jpg`);
+    }
+  });
+  const customCount = parseInt(document.getElementById("cfgConstantUR").value) || 83;
+  return arr.slice(0, customCount);
+}
+
+function buildConstantSRPool() {
+  const pools = [
+    { prefix: 'a', count: 17 }, { prefix: 'b', count: 19 }, { prefix: 'c', count: 11 },
+    { prefix: 'd', count: 6 },  { prefix: 'e', count: 6 },  { prefix: 'f', count: 5 }, { prefix: 's', count: 8 }
+  ];
+  let arr = [];
+  pools.forEach(p => {
+    for (let i = 1; i <= p.count; i++) {
+      arr.push(`images/constant/constant_sr/${p.prefix}_sr${i}.jpg`);
+    }
+  });
+  const customCount = parseInt(document.getElementById("cfgConstantSR").value) || 72;
+  return arr.slice(0, customCount);
+}
+
+function buildConstantRPool() {
+  const pools = [
+    { prefix: 'a', count: 7 }, { prefix: 'b', count: 4 }, { prefix: 'c', count: 10 },
+    { prefix: 'd', count: 7 }, { prefix: 'e', count: 4 }, { prefix: 'f', count: 4 }, { prefix: 's', count: 2 }
+  ];
+  let arr = [];
+  pools.forEach(p => {
+    for (let i = 1; i <= p.count; i++) {
+      arr.push(`images/constant/constant_r/${p.prefix}_r${i}.jpg`);
+    }
+  });
+  const customCount = parseInt(document.getElementById("cfgConstantR").value) || 38;
+  return arr.slice(0, customCount);
+}
+
+// 状態データ（タブ1用）
+let currentPulls = 0;
+let currentSpentBM = 0;
+let urCount = 0;
+let collabURCount = 0;
+let isGachaStarted = false;
+let initialBMBackup = 0;
+let chargedBM = 0;
+let chargedYen = 0;
+
+// 状態データ（タブ2: 狙い撃ち用独立マネージャー）
+let tCurrentPulls = 0;
+let tCurrentSpentBM = 0;
+let tUrCount = 0;
+let tCollabURCount = 0;
+let tOtherCollabURCount = 0;
+let isTGachaStarted = false;
+let tInitialBMBackup = 0;
+let tChargedBM = 0;
+let tChargedYen = 0;
+let tTargetConvexLevel = 4; // デフォルト完凸(20枚/種)
+
+// 基準値固定変数（タブ1用）
+let lockedBase60Rolls = 0;
+let lockedBaseBM = 0;
+
+// 基準値固定変数（タブ2用）
+let tLockedBase60Rolls = 0;
+
+let collabCardData = {}; 
+let targetSimCardData = {}; // タブ2用データ
+
+function toggleSettingsPanel() {
+  const panel = document.getElementById("settingsPanel");
+  panel.classList.toggle("active");
+}
+
+function onConfigChanged() {
+  const type = document.getElementById("collabType").value;
+  const weightInput = document.getElementById("cfgCollabWeight");
+  if (type === "4" && weightInput.value === "28") {
+    weightInput.value = 21;
+  }
+  calculateReverse();
+  calculateTargetReverse();
+}
+
+function setTargetConvex(convexLevel, btnElement) {
+  const type = parseInt(document.getElementById("collabType").value);
+  const perCardTarget = CONVEX_MAP[convexLevel] || 20;
+  
+  const fullTarget = type * perCardTarget;
+  document.getElementById("targetUR").value = fullTarget;
+
+  if (btnElement) {
+    const buttons = document.querySelectorAll("#convexBtnGroup button");
+    buttons.forEach(b => b.classList.remove("active"));
+    btnElement.classList.add("active");
+  }
+
+  calculateReverse();
+}
+
+// タブ2用 目標凸数ボタン切り替え関数
+function setTargetSimConvex(convexLevel, btnElement) {
+  tTargetConvexLevel = convexLevel;
+
+  if (btnElement) {
+    const buttons = document.querySelectorAll("#tConvexBtnGroup button");
+    buttons.forEach(b => b.classList.remove("active"));
+    btnElement.classList.add("active");
+  }
+
+  calculateTargetReverse();
+}
+
+function getCardDisplayName(cardKey, defaultLabel) {
+  if (typeof COLLAB_CARD_NAMES !== 'undefined' && COLLAB_CARD_NAMES[cardKey] && COLLAB_CARD_NAMES[cardKey].trim() !== "") {
+    return COLLAB_CARD_NAMES[cardKey];
+  }
+  return defaultLabel;
+}
+
+// タブ1 BM操作
+function getTotalBM() {
+  const initial = parseInt(document.getElementById("initialBM").value) || 0;
+  return initial + chargedBM;
+}
+
+function updateBMDisplay() {
+  const total = getTotalBM();
+  document.getElementById("displayTotalBM").textContent = `${total.toLocaleString()} BM`;
+  document.getElementById("displayChargedBM").textContent = `${chargedBM.toLocaleString()} BM`;
+  document.getElementById("displayChargedYen").textContent = `累計課金: ¥${chargedYen.toLocaleString()}`;
+}
+
+function onBMInputChanged() {
+  if (!isGachaStarted) {
+    initialBMBackup = parseInt(document.getElementById("initialBM").value) || 0;
+  }
+  updateBMDisplay();
+  updateStats();
+  calculateReverse();
+}
+
+function addYenCharge(yenAmount) {
+  chargedYen += yenAmount;
+  chargedBM += Math.floor(yenAmount * 1.37);
+  updateBMDisplay();
+  updateStats();
+  calculateReverse();
+}
+
+function resetBM() {
+  document.getElementById("initialBM").value = 0;
+  initialBMBackup = 0;
+  chargedBM = 0;
+  chargedYen = 0;
+  updateBMDisplay();
+  updateStats();
+  calculateReverse();
+}
+
+// タブ2 独立BM操作
+function getTTotalBM() {
+  const initial = parseInt(document.getElementById("tInitialBM").value) || 0;
+  return initial + tChargedBM;
+}
+
+function updateTBMDisplay() {
+  const total = getTTotalBM();
+  document.getElementById("tDisplayTotalBM").textContent = `${total.toLocaleString()} BM`;
+  document.getElementById("tDisplayChargedBM").textContent = `${tChargedBM.toLocaleString()} BM`;
+  document.getElementById("tDisplayChargedYen").textContent = `累計課金: ¥${tChargedYen.toLocaleString()}`;
+}
+
+function onTBMInputChanged() {
+  if (!isTGachaStarted) {
+    tInitialBMBackup = parseInt(document.getElementById("tInitialBM").value) || 0;
+  }
+  updateTBMDisplay();
+  updateTargetStats();
+  calculateTargetReverse();
+}
+
+function addTYenCharge(yenAmount) {
+  tChargedYen += yenAmount;
+  tChargedBM += Math.floor(yenAmount * 1.37);
+  updateTBMDisplay();
+  updateTargetStats();
+  calculateTargetReverse();
+}
+
+function resetTBM() {
+  document.getElementById("tInitialBM").value = 0;
+  tInitialBMBackup = 0;
+  tChargedBM = 0;
+  tChargedYen = 0;
+  updateTBMDisplay();
+  updateTargetStats();
+  calculateTargetReverse();
+}
+
+function getRandomItem(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  btn.classList.add('active');
+
+  if (tabId === 'targetSimTab') calculateTargetReverse();
+}
+
+function copyAuthorCode() {
+  navigator.clipboard.writeText("C-zhFb").then(() => {
+    alert("コードをコピーしました！");
+  });
+}
+
+function onCollabTypeChanged() {
+  const type = document.getElementById("collabType").value;
+  const weightInput = document.getElementById("cfgCollabWeight");
+  if (type === "4") {
+    weightInput.value = 21;
+  } else {
+    weightInput.value = 28;
+  }
+  document.getElementById("tCollabType").value = type;
+  updateCollabOptions(true);
+  updateTCollabOptions(true);
+  resetGacha();
+  resetTargetGacha();
+}
+
+function onCollabTitleChanged() {
+  const selVal = document.getElementById("collabSelect").value;
+  const tSel = document.getElementById("tCollabSelect");
+  if (tSel && tSel.value !== selVal) tSel.value = selVal;
+
+  resetGacha();
+  initCollabTracker();
+  calculateReverse();
+}
+
+function onTCollabTypeChanged() {
+  const type = document.getElementById("tCollabType").value;
+  const weightInput = document.getElementById("cfgCollabWeight");
+  if (type === "4") {
+    weightInput.value = 21;
+  } else {
+    weightInput.value = 28;
+  }
+  document.getElementById("collabType").value = type;
+  updateCollabOptions(true);
+  updateTCollabOptions(true);
+  resetGacha();
+  resetTargetGacha();
+}
+
+function onTCollabTitleChanged() {
+  const selVal = document.getElementById("tCollabSelect").value;
+  const sel = document.getElementById("collabSelect");
+  if (sel && sel.value !== selVal) sel.value = selVal;
+
+  resetTargetGacha();
+  initTargetSimTracker();
+  calculateTargetReverse();
+}
+
+function updateCollabOptions(resetSelection = false) {
+  const type = document.getElementById("collabType").value;
+  const select = document.getElementById("collabSelect");
+  
+  const prevValue = select.value;
+  select.innerHTML = "";
+  
+  const list = COLLAB_LISTS[type] || [];
+  list.forEach(key => {
+    const opt = document.createElement("option");
+    opt.value = key;
+    opt.textContent = COLLAB_NAMES[key] || key;
+    select.appendChild(opt);
+  });
+
+  if (!resetSelection && list.includes(prevValue)) {
+    select.value = prevValue;
+  }
+
+  initCollabTracker();
+  const defaultBtn = document.querySelector("#convexBtnGroup button:last-child");
+  setTargetConvex(4, defaultBtn);
+}
+
+function updateTCollabOptions(resetSelection = false) {
+  const type = document.getElementById("tCollabType").value;
+  const select = document.getElementById("tCollabSelect");
+  
+  const prevValue = select.value;
+  select.innerHTML = "";
+  
+  const list = COLLAB_LISTS[type] || [];
+  list.forEach(key => {
+    const opt = document.createElement("option");
+    opt.value = key;
+    opt.textContent = COLLAB_NAMES[key] || key;
+    select.appendChild(opt);
+  });
+
+  if (!resetSelection && list.includes(prevValue)) {
+    select.value = prevValue;
+  }
+
+  initTargetSimTracker();
+  const defaultBtn = document.querySelector("#tConvexBtnGroup button:last-child");
+  setTargetSimConvex(4, defaultBtn);
+}
+
+function initCollabTracker() {
+  const type = document.getElementById("collabType").value;
+  const collabKey = document.getElementById("collabSelect").value;
+  const trackerContainer = document.getElementById("collabTrackerContainer");
+  trackerContainer.innerHTML = "";
+  collabCardData = {};
+
+  const numCards = parseInt(type);
+  const startNum = (type === "2") ? 5 : 1;
+  const baseKey = collabKey.replace('_2type', '');
+
+  for (let i = 0; i < numCards; i++) {
+    const cardNum = startNum + i;
+    const path = `images/collab/ur_collab_${type}type/${collabKey}/${baseKey}_ur${cardNum}.jpg`;
+    collabCardData[path] = { initial: 0, pulled: 0, type: 'UR', idx: i };
+
+    const cardKey = `${collabKey}_ur${cardNum}`;
+    const defaultLabel = `UR ${i+1}`;
+    const displayName = getCardDisplayName(cardKey, defaultLabel);
+
+    const div = document.createElement("div");
+    div.className = "tracker-card";
+    div.innerHTML = `
+      <img src="${path}" onerror="this.src='https://via.placeholder.com/60x84?text=UR';" alt="UR">
+      <div class="tracker-info" style="font-size: 10px; line-height: 1.2; margin-bottom: 2px;" title="${displayName}">${displayName}</div>
+      <div class="tracker-input-group">
+        <label>初期所持:</label>
+        <input type="number" id="init_ur_${i}" value="0" min="0" max="20" oninput="onInitialCountChange('${path}', this.value)">
+      </div>
+      <div class="tracker-count" id="count_ur_${i}">合計: 0枚</div>
+    `;
+    trackerContainer.appendChild(div);
+  }
+
+  for (let i = 0; i < numCards; i++) {
+    const cardNum = startNum + i;
+    const path = `images/collab/ur_collab_${type}type/${collabKey}/${baseKey}_sr${cardNum}.jpg`;
+    collabCardData[path] = { initial: 0, pulled: 0, type: 'SR', idx: i };
+
+    const cardKey = `${collabKey}_sr${cardNum}`;
+    const defaultLabel = `SR ${i+1}`;
+    const displayName = getCardDisplayName(cardKey, defaultLabel);
+
+    const div = document.createElement("div");
+    div.className = "tracker-card";
+    div.innerHTML = `
+      <img src="${path}" onerror="this.src='https://via.placeholder.com/60x84?text=SR';" alt="SR">
+      <div class="tracker-info" style="font-size: 10px; line-height: 1.2; margin-bottom: 2px;" title="${displayName}">${displayName}</div>
+      <div class="tracker-input-group">
+        <label>初期所持:</label>
+        <input type="number" id="init_sr_${i}" value="0" min="0" oninput="onInitialCountChange('${path}', this.value)">
+      </div>
+      <div class="tracker-count" id="count_sr_${i}">合計: 0枚</div>
+    `;
+    trackerContainer.appendChild(div);
+  }
+}
+
+// タブ2: 1点・複数点狙い用トラッカー初期化
+function initTargetSimTracker() {
+  const type = document.getElementById("tCollabType").value;
+  const collabKey = document.getElementById("tCollabSelect").value;
+  const container = document.getElementById("targetSimTrackerContainer");
+  container.innerHTML = "";
+  targetSimCardData = {};
+
+  const numCards = parseInt(type);
+  const startNum = (type === "2") ? 5 : 1;
+  const baseKey = collabKey.replace('_2type', '');
+
+  for (let i = 0; i < numCards; i++) {
+    const cardNum = startNum + i;
+    const path = `images/collab/ur_collab_${type}type/${collabKey}/${baseKey}_ur${cardNum}.jpg`;
+    targetSimCardData[path] = { selected: true, initial: 0, pulled: 0, idx: i };
+
+    const cardKey = `${collabKey}_ur${cardNum}`;
+    const defaultLabel = `UR ${i+1}`;
+    const displayName = getCardDisplayName(cardKey, defaultLabel);
+
+    const div = document.createElement("div");
+    div.className = "target-checkbox-card selected";
+    div.id = `tCardBox_${i}`;
+    div.innerHTML = `
+      <img src="${path}" onerror="this.src='https://via.placeholder.com/60x84?text=UR';" alt="UR">
+      <div class="tracker-info" style="font-size: 10px; line-height: 1.2; margin-bottom: 2px;" title="${displayName}">${displayName}</div>
+      <div style="margin: 4px 0;">
+        <label style="font-size: 11px; color: var(--accent-color); cursor: pointer;">
+          <input type="checkbox" id="t_chk_${i}" checked onchange="onTargetCheckboxChange('${path}', ${i}, this.checked)" style="width: auto; margin-right: 3px;"> 狙う
+        </label>
+      </div>
+      <div class="tracker-input-group">
+        <label>初期所持:</label>
+        <input type="number" id="t_init_${i}" value="0" min="0" max="20" oninput="onTargetInitialChange('${path}', this.value)">
+      </div>
+      <div class="tracker-count" id="t_count_${i}">合計: 0枚</div>
+    `;
+    container.appendChild(div);
+  }
+}
+
+function onTargetCheckboxChange(path, idx, isChecked) {
+  if (isTGachaStarted) return;
+  if (targetSimCardData[path]) {
+    targetSimCardData[path].selected = isChecked;
+  }
+  const box = document.getElementById(`tCardBox_${idx}`);
+  if (box) {
+    if (isChecked) box.classList.add("selected");
+    else box.classList.remove("selected");
+  }
+  calculateTargetReverse();
+}
+
+function onTargetInitialChange(path, val) {
+  if (isTGachaStarted) return;
+  const num = parseInt(val) || 0;
+  if (targetSimCardData[path]) {
+    targetSimCardData[path].initial = num;
+  }
+  calculateTargetReverse();
+}
+
+function updateTargetTrackerDisplay() {
+  const convexVal = CONVEX_MAP[tTargetConvexLevel] || 20;
+
+  Object.keys(targetSimCardData).forEach(p => {
+    const data = targetSimCardData[p];
+    const total = data.initial + data.pulled;
+    const countEl = document.getElementById(`t_count_${data.idx}`);
+    if (countEl) {
+      if (total > convexVal) {
+        countEl.innerHTML = `合計: ${total}枚 <span style="font-size:10px; color:#ef4444;">(有効${convexVal})</span>`;
+      } else {
+        countEl.textContent = `合計: ${total}枚`;
+      }
+    }
+  });
+}
+
+function calculateTargetReverse() {
+  const type = parseInt(document.getElementById("tCollabType").value);
+  const convexVal = CONVEX_MAP[tTargetConvexLevel] || 20;
+  const totalBM = getTTotalBM();
+
+  let selectedCount = 0;
+  let initialSelectedSum = 0;
+  Object.keys(targetSimCardData).forEach(p => {
+    const d = targetSimCardData[p];
+    if (d.selected) {
+      selectedCount++;
+      initialSelectedSum += Math.min(convexVal, d.initial);
+    }
+  });
+
+  const targetUR = selectedCount * convexVal;
+  document.getElementById("tResTargetUR").textContent = targetUR;
+
+  const constantURCount = parseInt(document.getElementById("cfgConstantUR").value) || 83;
+  const singleWeight = parseInt(document.getElementById("cfgCollabWeight").value) || 28;
+  
+  const targetCollabWeight = selectedCount * singleWeight;
+  const totalCollabWeight = type * singleWeight;
+
+  let collabProb = targetCollabWeight / (constantURCount + totalCollabWeight);
+  const targetURPer60 = selectedCount > 0 ? (60 * 0.02 * collabProb) + (1.5 / 20) : 0;
+
+  // タブ2独自：所持BMでの狙い目UR排出期待値（理論値）のリアルタイム計算＆内訳注釈
+  const pulls60Count = Math.floor(totalBM / 5000);
+  const remainderBM = totalBM % 5000;
+  const tBmExpectedUR = pulls60Count * targetURPer60;
+
+  const displayTBMExpectedEl = document.getElementById("tDisplayBMExpectedUR");
+  const displayTBMDetailEl = document.getElementById("tDisplayBMExpectedDetail");
+
+  if (displayTBMExpectedEl && displayTBMDetailEl) {
+    displayTBMExpectedEl.textContent = tBmExpectedUR.toFixed(2);
+    if (totalBM < 5000) {
+      displayTBMDetailEl.textContent = `(※5,000 BM未満のためガチャ未実行)`;
+    } else {
+      if (remainderBM > 0) {
+        displayTBMDetailEl.textContent = `(60連 ${pulls60Count}回分 / 端数 ${remainderBM.toLocaleString()} BM切捨)`;
+      } else {
+        displayTBMDetailEl.textContent = `(60連 ${pulls60Count}回分)`;
+      }
+    }
+  }
+
+  if (!isTGachaStarted) {
+    const netTarget = Math.max(0, targetUR - initialSelectedSum);
+    tLockedBase60Rolls = (netTarget > 0 && targetURPer60 > 0) ? Math.ceil(netTarget / targetURPer60) : 0;
+  }
+
+  let currentEffectiveSelectedUR = 0;
+  Object.keys(targetSimCardData).forEach(p => {
+    const d = targetSimCardData[p];
+    if (d.selected) {
+      const total = d.initial + d.pulled;
+      currentEffectiveSelectedUR += Math.min(convexVal, total);
+    }
+  });
+
+  const currentTickets = Math.floor(tCurrentPulls / 40);
+  const ticketExchanges = Math.floor(currentTickets / 20);
+
+  const currentNeededUR = Math.max(0, targetUR - currentEffectiveSelectedUR - ticketExchanges);
+  const additional60Rolls = (currentNeededUR > 0 && targetURPer60 > 0) ? Math.ceil(currentNeededUR / targetURPer60) : 0;
+  const additionalNeededBM = additional60Rolls * 5000;
+
+  const shortageBM = Math.max(0, additionalNeededBM - totalBM);
+  const requiredYen = Math.ceil(shortageBM * (10000 / 13700));
+
+  const actual60Rolls = Math.floor(tCurrentPulls / 60);
+  const diffRolls = actual60Rolls - tLockedBase60Rolls;
+  const diffYen = Math.abs(diffRolls) * 3650;
+  let diffText = "";
+  if (diffRolls > 0) {
+    diffText = `＋${diffRolls}回 (＋¥${diffYen.toLocaleString()})`;
+  } else if (diffRolls < 0) {
+    diffText = `${diffRolls}回 (－¥${diffYen.toLocaleString()})`;
+  } else {
+    diffText = `±0回 (±¥0)`;
+  }
+
+  const totalWithTickets = currentEffectiveSelectedUR + ticketExchanges;
+  if (ticketExchanges > 0) {
+    document.getElementById("tResEffectiveUR").textContent = `${currentEffectiveSelectedUR}枚 ＋ チケット${ticketExchanges}枚（合計 ${totalWithTickets}枚）`;
+  } else {
+    document.getElementById("tResEffectiveUR").textContent = `${currentEffectiveSelectedUR} 枚`;
+  }
+
+  document.getElementById("tResPulls60Count").textContent = `${actual60Rolls}`;
+  document.getElementById("tResInitialRolls").textContent = `${tLockedBase60Rolls}`;
+  
+  const diffEl = document.getElementById("tResDiffRolls");
+  diffEl.textContent = diffText;
+  diffEl.style.color = diffRolls > 0 ? "#f43f5e" : diffRolls < 0 ? "#10b981" : "#00d2ff";
+
+  const luckText = calculateTargetLuckPercentile(tCurrentPulls, tCollabURCount, selectedCount, type, constantURCount, singleWeight);
+  document.getElementById("tResLuckPercentile").innerHTML = luckText;
+
+  document.getElementById("tResRolls").textContent = `${additional60Rolls} 回 (${additional60Rolls * 60} 連) / ${additionalNeededBM.toLocaleString()} BM`;
+  document.getElementById("tResCost").textContent = `${shortageBM.toLocaleString()} BM / ¥${requiredYen.toLocaleString()}`;
+
+  updateTargetTrackerDisplay();
+}
+
+function calculateTargetLuckPercentile(totalPulls, actualTargetURs, selectedCount, type, constantURCount, singleWeight) {
+  if (totalPulls === 0) return "-";
+  const targetCollabWeight = selectedCount * singleWeight;
+  const totalCollabWeight = type * singleWeight;
+  const pTargetUR = 0.02 * (targetCollabWeight / (constantURCount + totalCollabWeight));
+
+  let probGreaterOrEqual = 0;
+  if (totalPulls > 200) {
+    const mean = totalPulls * pTargetUR;
+    const stdDev = Math.sqrt(totalPulls * pTargetUR * (1 - pTargetUR));
+    const z = (actualTargetURs - 0.5 - mean) / stdDev;
+    const approxCDF = 0.5 * (1 + Math.tanh(z * 0.7978845608 * (1 + 0.044715 * z * z)));
+    probGreaterOrEqual = 1 - approxCDF;
+  } else {
+    for (let k = actualTargetURs; k <= totalPulls; k++) {
+      let pK = nCr(totalPulls, k) * Math.pow(pTargetUR, k) * Math.pow(1 - pTargetUR, totalPulls - k);
+      probGreaterOrEqual += pK;
+    }
+  }
+
+  let topPercent = Math.min(99.9, Math.max(0.1, probGreaterOrEqual * 100));
+  if (topPercent <= 50) {
+    return `上位 <span style="color: #10b981;">${topPercent.toFixed(1)}%</span> (上振れ！🔥)`;
+  } else {
+    return `上位 <span style="color: #f43f5e;">${topPercent.toFixed(1)}%</span> (下振れ…)`;
+  }
+}
+
+function onInitialCountChange(path, val) {
+  if (isGachaStarted) return;
+  const num = parseInt(val) || 0;
+  if (collabCardData[path]) {
+    collabCardData[path].initial = num;
+  }
+  updateTrackerDisplay();
+  calculateReverse();
+}
+
+function updateTrackerDisplay() {
+  const targetUR = parseFloat(document.getElementById("targetUR").value) || 60;
+  const type = parseInt(document.getElementById("collabType").value);
+  let perCardCap = Math.round(targetUR / type);
+  if (![1, 2, 5, 11, 20].includes(perCardCap)) perCardCap = 20;
+
+  Object.keys(collabCardData).forEach(p => {
+    const data = collabCardData[p];
+    const total = data.initial + data.pulled;
+    const prefix = (data.type === 'UR') ? 'count_ur_' : 'count_sr_';
+    const countEl = document.getElementById(`${prefix}${data.idx}`);
+    if (countEl) {
+      if (data.type === 'UR' && total > perCardCap) {
+        countEl.innerHTML = `合計: ${total}枚 <span style="font-size:10px; color:#ef4444;">(有効${perCardCap})</span>`;
+      } else {
+        countEl.textContent = `合計: ${total}枚`;
+      }
+    }
+  });
+}
+
+function getEffectiveCollabURTotal(perCardCap = 20) {
+  let effectiveSum = 0;
+  Object.keys(collabCardData).forEach(p => {
+    if (collabCardData[p].type === 'UR') {
+      const total = collabCardData[p].initial + collabCardData[p].pulled;
+      effectiveSum += Math.min(perCardCap, total);
+    }
+  });
+  return effectiveSum;
+}
+
+function nCr(n, r) {
+  if (r < 0 || r > n) return 0;
+  if (r === 0 || r === n) return 1;
+  if (r > n / 2) r = n - r;
+  let res = 1;
+  for (let i = 1; i <= r; i++) {
+    res = res * (n - i + 1) / i;
+  }
+  return res;
+}
+
+function calculateLuckPercentile(totalPulls, actualCollabURs) {
+  if (totalPulls === 0) return "-";
+
+  const type = parseInt(document.getElementById("collabType").value);
+  const constantURCount = parseInt(document.getElementById("cfgConstantUR").value) || 83;
+  const singleWeight = parseInt(document.getElementById("cfgCollabWeight").value) || 28;
+  const totalCollabWeight = type * singleWeight;
+
+  const pCollabUR = 0.02 * (totalCollabWeight / (constantURCount + totalCollabWeight));
+
+  let probGreaterOrEqual = 0;
+  if (totalPulls > 200) {
+    const mean = totalPulls * pCollabUR;
+    const stdDev = Math.sqrt(totalPulls * pCollabUR * (1 - pCollabUR));
+    const z = (actualCollabURs - 0.5 - mean) / stdDev;
+    const approxCDF = 0.5 * (1 + Math.tanh(z * 0.7978845608 * (1 + 0.044715 * z * z)));
+    probGreaterOrEqual = 1 - approxCDF;
+  } else {
+    for (let k = actualCollabURs; k <= totalPulls; k++) {
+      let pK = nCr(totalPulls, k) * Math.pow(pCollabUR, k) * Math.pow(1 - pCollabUR, totalPulls - k);
+      probGreaterOrEqual += pK;
+    }
+  }
+
+  let topPercent = Math.min(99.9, Math.max(0.1, probGreaterOrEqual * 100));
+  if (topPercent <= 50) {
+    return `上位 <span style="color: #10b981;">${topPercent.toFixed(1)}%</span> (上振れ！🔥)`;
+  } else {
+    return `上位 <span style="color: #f43f5e;">${topPercent.toFixed(1)}%</span> (下振れ…)`;
+  }
+}
+
+function calculateReverse() {
+  const type = parseInt(document.getElementById("collabType").value);
+  const targetUR = parseFloat(document.getElementById("targetUR").value) || 0;
+  const totalBM = getTotalBM();
+
+  const constantURCount = parseInt(document.getElementById("cfgConstantUR").value) || 83;
+  const singleWeight = parseInt(document.getElementById("cfgCollabWeight").value) || 28;
+  const totalCollabWeight = type * singleWeight;
+
+  let collabProb = totalCollabWeight / (constantURCount + totalCollabWeight);
+  const collabURPer60 = (60 * 0.02 * collabProb) + (1.5 / 20);
+
+  // 所持BMでのコラボUR排出期待値（理論値）のリアルタイム計算＆内訳注釈
+  const pulls60Count = Math.floor(totalBM / 5000);
+  const remainderBM = totalBM % 5000;
+  const bmExpectedUR = pulls60Count * collabURPer60;
+
+  const displayBMExpectedEl = document.getElementById("displayBMExpectedUR");
+  const displayBMDetailEl = document.getElementById("displayBMExpectedDetail");
+
+  if (displayBMExpectedEl && displayBMDetailEl) {
+    displayBMExpectedEl.textContent = bmExpectedUR.toFixed(2);
+    if (totalBM < 5000) {
+      displayBMDetailEl.textContent = `(※5,000 BM未満のためガチャ未実行)`;
+    } else {
+      if (remainderBM > 0) {
+        displayBMDetailEl.textContent = `(60連 ${pulls60Count}回分 / 端数 ${remainderBM.toLocaleString()} BM切捨)`;
+      } else {
+        displayBMDetailEl.textContent = `(60連 ${pulls60Count}回分)`;
+      }
+    }
+  }
+
+  let perCardCap = Math.round(targetUR / type);
+  if (![1, 2, 5, 11, 20].includes(perCardCap)) perCardCap = 20;
+
+  let initialURSum = 0;
+  Object.keys(collabCardData).forEach(p => {
+    if (collabCardData[p].type === 'UR') {
+      initialURSum += Math.min(perCardCap, collabCardData[p].initial);
+    }
+  });
+
+  if (!isGachaStarted) {
+    const netTarget = Math.max(0, targetUR - initialURSum);
+    lockedBase60Rolls = netTarget > 0 ? Math.ceil(netTarget / collabURPer60) : 0;
+    lockedBaseBM = lockedBase60Rolls * 5000;
+  }
+
+  const currentEffectiveUR = getEffectiveCollabURTotal(perCardCap);
+  const currentTickets = Math.floor(currentPulls / 40);
+  const ticketExchanges = Math.floor(currentTickets / 20);
+
+  const currentNeededUR = Math.max(0, targetUR - currentEffectiveUR - ticketExchanges);
+  const additional60Rolls = currentNeededUR > 0 ? Math.ceil(currentNeededUR / collabURPer60) : 0;
+  const additionalNeededBM = additional60Rolls * 5000;
+
+  const shortageBM = Math.max(0, additionalNeededBM - totalBM);
+  const requiredYen = Math.ceil(shortageBM * (10000 / 13700));
+
+  const actual60Rolls = Math.floor(currentPulls / 60);
+  const diffRolls = actual60Rolls - lockedBase60Rolls;
+  const diffYen = Math.abs(diffRolls) * 3650;
+  let diffText = "";
+  if (diffRolls > 0) {
+    diffText = `＋${diffRolls}回 (＋¥${diffYen.toLocaleString()})`;
+  } else if (diffRolls < 0) {
+    diffText = `${diffRolls}回 (－¥${diffYen.toLocaleString()})`;
+  } else {
+    diffText = `±0回 (±¥0)`;
+  }
+
+  const totalWithTickets = currentEffectiveUR + ticketExchanges;
+  if (ticketExchanges > 0) {
+    document.getElementById("resEffectiveUR").textContent = `${currentEffectiveUR}枚 ＋ チケット${ticketExchanges}枚（合計 ${totalWithTickets}枚）`;
+  } else {
+    document.getElementById("resEffectiveUR").textContent = `${currentEffectiveUR} 枚`;
+  }
+
+  document.getElementById("resTargetUR").textContent = `${targetUR}`;
+  document.getElementById("resPulls60Count").textContent = `${actual60Rolls}`;
+  document.getElementById("resInitial想定Rolls").textContent = `${lockedBase60Rolls}`;
+  
+  const diffEl = document.getElementById("resDiffRolls");
+  diffEl.textContent = diffText;
+  diffEl.style.color = diffRolls > 0 ? "#f43f5e" : diffRolls < 0 ? "#10b981" : "#00d2ff";
+
+  const luckText = calculateLuckPercentile(currentPulls, collabURCount);
+  document.getElementById("resLuckPercentile").innerHTML = luckText;
+
+  document.getElementById("resRolls").textContent = `${additional60Rolls} 回 (${additional60Rolls * 60} 連) / ${additionalNeededBM.toLocaleString()} BM`;
+  document.getElementById("resCost").textContent = `${shortageBM.toLocaleString()} BM / ¥${requiredYen.toLocaleString()}`;
+
+  const hintEl = document.getElementById("targetHint");
+  if (hintEl) {
+    hintEl.textContent = `※${type}種コラボ 目標1種あたり上限 ${perCardCap}枚 (必要純粋UR: ${targetUR}枚)`;
+  }
+
+  updateTrackerDisplay();
+}
+
+function lockInitialInputs() {
+  if (!isGachaStarted) {
+    isGachaStarted = true;
+    initialBMBackup = parseInt(document.getElementById("initialBM").value) || 0;
+
+    document.getElementById("targetUR").disabled = true;
+    document.getElementById("initialBM").disabled = true;
+    document.getElementById("collabType").disabled = true;
+    document.getElementById("collabSelect").disabled = true;
+
+    const convexBtns = document.querySelectorAll("#convexBtnGroup button");
+    convexBtns.forEach(btn => btn.disabled = true);
+
+    const type = parseInt(document.getElementById("collabType").value);
+    for (let i = 0; i < type; i++) {
+      const inputUr = document.getElementById(`init_ur_${i}`);
+      const inputSr = document.getElementById(`init_sr_${i}`);
+      if (inputUr) inputUr.disabled = true;
+      if (inputSr) inputSr.disabled = true;
+    }
+  }
+}
+
+function lockTargetInitialInputs() {
+  if (!isTGachaStarted) {
+    isTGachaStarted = true;
+    tInitialBMBackup = parseInt(document.getElementById("tInitialBM").value) || 0;
+
+    document.getElementById("tInitialBM").disabled = true;
+    document.getElementById("tCollabType").disabled = true;
+    document.getElementById("tCollabSelect").disabled = true;
+
+    const convexBtns = document.querySelectorAll("#tConvexBtnGroup button");
+    convexBtns.forEach(btn => btn.disabled = true);
+
+    const type = parseInt(document.getElementById("tCollabType").value);
+    for (let i = 0; i < type; i++) {
+      const chk = document.getElementById(`t_chk_${i}`);
+      const inp = document.getElementById(`t_init_${i}`);
+      if (chk) chk.disabled = true;
+      if (inp) inp.disabled = true;
+    }
+  }
+}
+
+// タブ1用ガチャ実行
+function pullGacha(count) {
+  const cost = count === 1 ? 100 : 5000;
+  let totalBM = getTotalBM();
+
+  if (totalBM < cost) {
+    document.getElementById("bmErrorMsg").style.display = "block";
+    return;
+  }
+  document.getElementById("bmErrorMsg").style.display = "none";
+
+  lockInitialInputs();
+
+  let initialInput = document.getElementById("initialBM");
+  let initialVal = parseInt(initialInput.value) || 0;
+  if (initialVal >= cost) {
+    initialInput.value = initialVal - cost;
+  } else {
+    let remainder = cost - initialVal;
+    initialInput.value = 0;
+    chargedBM = Math.max(0, chargedBM - remainder);
+  }
+
+  currentPulls += count;
+  currentSpentBM += cost;
+
+  const type = document.getElementById("collabType").value;
+  const collabKey = document.getElementById("collabSelect").value;
+  const baseKey = collabKey.replace('_2type', '');
+
+  const constantURPool = buildConstantURPool();
+  const constantSRPool = buildConstantSRPool();
+  const constantRPool = buildConstantRPool();
+
+  const constantURCount = constantURPool.length;
+  const singleWeight = parseInt(document.getElementById("cfgCollabWeight").value) || 28;
+  const collabWeight = parseInt(type) * singleWeight;
+
+  let pulledCardMapThisTime = {};
+
+  for (let i = 0; i < count; i++) {
+    const rand = Math.random() * 100;
+    let rarity = "R";
+    if (rand < 2.0) rarity = "UR";
+    else if (rand < 20.0) rarity = "SR";
+
+    let isCollab = false;
+    let imgPath = "";
+
+    if (rarity === "UR") {
+      urCount++;
+      const totalWeight = constantURCount + collabWeight;
+      if (Math.random() * totalWeight < collabWeight) {
+        isCollab = true;
+        collabURCount++;
+        const num = type === "2" ? (Math.floor(Math.random() * 2) + 5) : (Math.floor(Math.random() * parseInt(type)) + 1);
+        imgPath = `images/collab/ur_collab_${type}type/${collabKey}/${baseKey}_ur${num}.jpg`;
+      } else {
+        imgPath = getRandomItem(constantURPool);
+      }
+    } else if (rarity === "SR") {
+      const constantSRCount = constantSRPool.length;
+      const totalSRWeight = constantSRCount + collabWeight;
+      if (Math.random() * totalSRWeight < collabWeight) {
+        isCollab = true;
+        const num = type === "2" ? (Math.floor(Math.random() * 2) + 5) : (Math.floor(Math.random() * parseInt(type)) + 1);
+        imgPath = `images/collab/ur_collab_${type}type/${collabKey}/${baseKey}_sr${num}.jpg`;
+      } else {
+        imgPath = getRandomItem(constantSRPool);
+      }
+    } else {
+      imgPath = getRandomItem(constantRPool);
+    }
+
+    if (!pulledCardMapThisTime[imgPath]) {
+      let priority = 6;
+      if (rarity === "UR") priority = isCollab ? 1 : 2;
+      else if (rarity === "SR") priority = isCollab ? 3 : 4;
+      else if (rarity === "R") priority = isCollab ? 5 : 6;
+
+      pulledCardMapThisTime[imgPath] = { rarity: rarity, isCollab: isCollab, count: 0, priority: priority, path: imgPath };
+    }
+    pulledCardMapThisTime[imgPath].count++;
+
+    if (collabCardData[imgPath]) {
+      collabCardData[imgPath].pulled++;
+    }
+  }
+
+  renderCardResults(pulledCardMapThisTime, "cardResults");
+  updateBMDisplay();
+  updateStats();
+  calculateReverse();
+}
+
+// タブ2（狙い撃ち）用ガチャ実行
+function targetPullGacha(count) {
+  const cost = count === 1 ? 100 : 5000;
+  let totalBM = getTTotalBM();
+
+  if (totalBM < cost) {
+    document.getElementById("tBmErrorMsg").style.display = "block";
+    return;
+  }
+  document.getElementById("tBmErrorMsg").style.display = "none";
+
+  lockTargetInitialInputs();
+
+  let initialInput = document.getElementById("tInitialBM");
+  let initialVal = parseInt(initialInput.value) || 0;
+  if (initialVal >= cost) {
+    initialInput.value = initialVal - cost;
+  } else {
+    let remainder = cost - initialVal;
+    initialInput.value = 0;
+    tChargedBM = Math.max(0, tChargedBM - remainder);
+  }
+
+  tCurrentPulls += count;
+  tCurrentSpentBM += cost;
+
+  const type = document.getElementById("tCollabType").value;
+  const collabKey = document.getElementById("tCollabSelect").value;
+  const baseKey = collabKey.replace('_2type', '');
+
+  const constantURPool = buildConstantURPool();
+  const constantSRPool = buildConstantSRPool();
+  const constantRPool = buildConstantRPool();
+
+  const constantURCount = constantURPool.length;
+  const singleWeight = parseInt(document.getElementById("cfgCollabWeight").value) || 28;
+  const collabWeight = parseInt(type) * singleWeight;
+
+  let pulledCardMapThisTime = {};
+
+  for (let i = 0; i < count; i++) {
+    const rand = Math.random() * 100;
+    let rarity = "R";
+    if (rand < 2.0) rarity = "UR";
+    else if (rand < 20.0) rarity = "SR";
+
+    let isCollab = false;
+    let imgPath = "";
+
+    if (rarity === "UR") {
+      tUrCount++;
+      const totalWeight = constantURCount + collabWeight;
+      if (Math.random() * totalWeight < collabWeight) {
+        isCollab = true;
+        const num = type === "2" ? (Math.floor(Math.random() * 2) + 5) : (Math.floor(Math.random() * parseInt(type)) + 1);
+        imgPath = `images/collab/ur_collab_${type}type/${collabKey}/${baseKey}_ur${num}.jpg`;
+
+        if (targetSimCardData[imgPath] && targetSimCardData[imgPath].selected) {
+          tCollabURCount++;
+        } else {
+          tOtherCollabURCount++;
+        }
+      } else {
+        imgPath = getRandomItem(constantURPool);
+      }
+    } else if (rarity === "SR") {
+      const constantSRCount = constantSRPool.length;
+      const totalSRWeight = constantSRCount + collabWeight;
+      if (Math.random() * totalSRWeight < collabWeight) {
+        isCollab = true;
+        const num = type === "2" ? (Math.floor(Math.random() * 2) + 5) : (Math.floor(Math.random() * parseInt(type)) + 1);
+        imgPath = `images/collab/ur_collab_${type}type/${collabKey}/${baseKey}_sr${num}.jpg`;
+      } else {
+        imgPath = getRandomItem(constantSRPool);
+      }
+    } else {
+      imgPath = getRandomItem(constantRPool);
+    }
+
+    if (!pulledCardMapThisTime[imgPath]) {
+      let priority = 6;
+      if (rarity === "UR") priority = isCollab ? 1 : 2;
+      else if (rarity === "SR") priority = isCollab ? 3 : 4;
+      else if (rarity === "R") priority = isCollab ? 5 : 6;
+
+      pulledCardMapThisTime[imgPath] = { rarity: rarity, isCollab: isCollab, count: 0, priority: priority, path: imgPath };
+    }
+    pulledCardMapThisTime[imgPath].count++;
+
+    if (targetSimCardData[imgPath]) {
+      targetSimCardData[imgPath].pulled++;
+    }
+  }
+
+  renderCardResults(pulledCardMapThisTime, "tCardResults");
+  updateTBMDisplay();
+  updateTargetStats();
+  calculateTargetReverse();
+}
+
+function renderCardResults(cardMap, containerId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = "";
+
+  const sortedCards = Object.values(cardMap).sort((a, b) => a.priority - b.priority);
+
+  sortedCards.forEach(card => {
+    const cardEl = document.createElement("div");
+    cardEl.className = `card-item ${card.rarity}`;
+    cardEl.innerHTML = `
+      <span class="card-badge badge-${card.rarity}">${card.rarity}</span>
+      <img src="${card.path}" onerror="this.src='https://via.placeholder.com/100x140?text=${card.rarity}';" alt="${card.rarity}">
+      ${card.isCollab ? '<span class="badge-collab">COLLAB</span>' : ''}
+      ${card.count > 1 ? `<span class="card-count-badge">×${card.count}</span>` : ''}
+    `;
+    container.appendChild(cardEl);
+  });
+}
+
+function updateStats() {
+  document.getElementById("statTotalPulls").textContent = currentPulls;
+  
+  const totalBM = getTotalBM();
+  document.getElementById("statOwnedBM").textContent = totalBM.toLocaleString();
+  
+  const singleBtn = document.getElementById("btnPullSingle");
+  const btn60 = document.getElementById("btnPull60");
+  if (totalBM < 100) singleBtn.disabled = true; else singleBtn.disabled = false;
+  if (totalBM < 5000) btn60.disabled = true; else btn60.disabled = false;
+
+  if (totalBM >= 100) document.getElementById("bmErrorMsg").style.display = "none";
+
+  const spentYen = Math.round(currentSpentBM * (10000 / 13700));
+  document.getElementById("statSpentBM").textContent = `${currentSpentBM.toLocaleString()} BM (約 ¥${spentYen.toLocaleString()})`;
+
+  const totalTickets = Math.floor(currentPulls / 40);
+  const exchangeableCards = Math.floor(totalTickets / 20);
+  document.getElementById("statTickets").textContent = `${totalTickets} 枚 (交換可能: ${exchangeableCards} 枚)`;
+
+  document.getElementById("statURCount").textContent = urCount;
+  document.getElementById("statCollabURCount").textContent = collabURCount;
+}
+
+function updateTargetStats() {
+  document.getElementById("tStatTotalPulls").textContent = tCurrentPulls;
+  
+  const totalBM = getTTotalBM();
+  document.getElementById("tStatOwnedBM").textContent = totalBM.toLocaleString();
+  
+  const singleBtn = document.getElementById("tBtnPullSingle");
+  const btn60 = document.getElementById("tBtnPull60");
+  if (totalBM < 100) singleBtn.disabled = true; else singleBtn.disabled = false;
+  if (totalBM < 5000) btn60.disabled = true; else btn60.disabled = false;
+
+  if (totalBM >= 100) document.getElementById("tBmErrorMsg").style.display = "none";
+
+  const spentYen = Math.round(tCurrentSpentBM * (10000 / 13700));
+  document.getElementById("tStatSpentBM").textContent = `${tCurrentSpentBM.toLocaleString()} BM (約 ¥${spentYen.toLocaleString()})`;
+
+  const totalTickets = Math.floor(tCurrentPulls / 40);
+  const exchangeableCards = Math.floor(totalTickets / 20);
+  document.getElementById("tStatTickets").textContent = `${totalTickets} 枚 (狙い目交換可能: ${exchangeableCards} 枚)`;
+
+  document.getElementById("tStatURCount").textContent = tUrCount;
+  document.getElementById("tStatCollabURCount").textContent = tCollabURCount;
+  document.getElementById("tStatOtherCollabURCount").textContent = tOtherCollabURCount;
+}
+
+function resetGacha() {
+  currentPulls = 0;
+  currentSpentBM = 0;
+  urCount = 0;
+  collabURCount = 0;
+  isGachaStarted = false;
+
+  document.getElementById("initialBM").value = initialBMBackup;
+  chargedBM = 0;
+  chargedYen = 0;
+
+  document.getElementById("targetUR").disabled = false;
+  document.getElementById("initialBM").disabled = false;
+  document.getElementById("collabType").disabled = false;
+  document.getElementById("collabSelect").disabled = false;
+
+  const convexBtns = document.querySelectorAll("#convexBtnGroup button");
+  convexBtns.forEach(btn => btn.disabled = false);
+
+  document.getElementById("cardResults").innerHTML = "";
+  document.getElementById("bmErrorMsg").style.display = "none";
+
+  initCollabTracker();
+  updateBMDisplay();
+  updateStats();
+  calculateReverse();
+}
+
+function resetTargetGacha() {
+  tCurrentPulls = 0;
+  tCurrentSpentBM = 0;
+  tUrCount = 0;
+  tCollabURCount = 0;
+  tOtherCollabURCount = 0;
+  isTGachaStarted = false;
+
+  document.getElementById("tInitialBM").value = tInitialBMBackup;
+  tChargedBM = 0;
+  tChargedYen = 0;
+
+  document.getElementById("tInitialBM").disabled = false;
+  document.getElementById("tCollabType").disabled = false;
+  document.getElementById("tCollabSelect").disabled = false;
+
+  const convexBtns = document.querySelectorAll("#tConvexBtnGroup button");
+  convexBtns.forEach(btn => btn.disabled = false);
+
+  const type = parseInt(document.getElementById("tCollabType").value);
+  for (let i = 0; i < type; i++) {
+    const chk = document.getElementById(`t_chk_${i}`);
+    const inp = document.getElementById(`t_init_${i}`);
+    if (chk) chk.disabled = false;
+    if (inp) inp.disabled = false;
+  }
+
+  document.getElementById("tCardResults").innerHTML = "";
+  document.getElementById("tBmErrorMsg").style.display = "none";
+
+  initTargetSimTracker();
+  updateTBMDisplay();
+  updateTargetStats();
+  calculateTargetReverse();
+}
+
+// 初期化実行
+updateCollabOptions();
+updateTCollabOptions();
+updateBMDisplay();
+updateTBMDisplay();
+initialBMBackup = parseInt(document.getElementById("initialBM").value) || 0;
+tInitialBMBackup = parseInt(document.getElementById("tInitialBM").value) || 0;
+</script>
+</body>
+</html>
